@@ -8,7 +8,7 @@ module.exports = {
   devServer: {
     proxy: {
       [constanst.baseUrl]: {
-        target: "http://test-sh-industry-ui.meiqicloud.com:8092",
+        target: "",
         changeOrigin: true,
         pathRewrite: {
           [`^${constanst.baseUrl}`]: "",
