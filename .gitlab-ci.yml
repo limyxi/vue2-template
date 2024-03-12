@@ -1,0 +1,88 @@
+stages:
+  - build
+  #- test
+  - deploy
+
+variables:
+  GIT_STRATEGY: none
+  CI_GITLAB_RUNNER_PWD: "32!AD93cADF1ghjk!!C"
+  CI_PROJECT_PATH: "/home/gitlab-runner/projects" 
+
+
+  TEST_HOST: "root@192.168.0.94"
+  TEST_PWD: "4dj4kah#djckc2993j2dajD3995"
+  TEST_PROJECT_PATH: "/home/projects/dachuan"
+  TEST_SOURCE_PATH: "/home/projects/dachuan/ui"
+  TEST_SSH_CMD: "sshpass -p $TEST_PWD ssh -o StrictHostKeyChecking=no $TEST_HOST "
+
+
+ 
+build:
+  variables:
+    GIT_STRATEGY: fetch
+  stage: build
+  script: 
+  - mkdir -p $CI_PROJECT_PATH
+  - echo "INFO 检查并创建$CI_PROJECT_PATH基础目录 ... 成功"
+
+  - echo "$CI_GITLAB_RUNNER_PWD" | sudo -S chmod -R 777 $CI_PROJECT_PATH
+  - rm -rf $CI_PROJECT_PATH/$CI_PROJECT_NAME
+  - mkdir -p  $CI_PROJECT_PATH/$CI_PROJECT_NAME
+  - echo "INFO 删除并创建$CI_PROJECT_PATH/$CI_PROJECT_NAME项目目录 ... 成功"
+
+  # projects
+  - cp -r $CI_PROJECT_DIR $CI_PROJECT_PATH/
+  - echo "INFO 项目目录project ... 成功"
+  
+  # refresh dir 
+  - cd $CI_PROJECT_PATH/$CI_PROJECT_NAME
+  - cd ~
+
+  # npm package
+  #- cd $CI_PROJECT_PATH/$CI_PROJECT_NAME
+  #- npm install --registry=https://registry.npm.taobao.org
+  #- npm run build 
+
+ 
+deploy_dev:
+
+  stage: deploy
+  script: 
+
+  # projects
+  - $TEST_SSH_CMD mkdir -p $TEST_PROJECT_PATH/$CI_PROJECT_NAME
+  - $TEST_SSH_CMD "echo '$TEST_PWD' | sudo -S chmod -R 777 $TEST_PROJECT_PATH/$CI_PROJECT_NAME"
+    #- sshpass -p $UAT_PWD rsync -az --progress --delete $CI_PROJECT_PATH/$CI_PROJECT_NAME $UAT_HOST:$UAT_PROJECT_PATH/
+  - $TEST_SSH_CMD "rm -rf $TEST_SOURCE_PATH/$CI_PROJECT_NAME/*"
+  - sshpass -p $TEST_PWD rsync -az --progress --delete $CI_PROJECT_PATH/$CI_PROJECT_NAME $TEST_HOST:$TEST_SOURCE_PATH/
+  - $TEST_SSH_CMD "cd $TEST_SOURCE_PATH/$CI_PROJECT_NAME ; npm install --registry=https://registry.npm.taobao.org ; npm run build ; bash"
+
+  - $TEST_SSH_CMD "rm -rf $TEST_PROJECT_PATH/$CI_PROJECT_NAME/*"
+  - $TEST_SSH_CMD "cp -R $TEST_SOURCE_PATH/$CI_PROJECT_NAME/dist  $TEST_PROJECT_PATH/$CI_PROJECT_NAME/"
+
+  - echo "INFO 项目更新到$TEST_PROJECT_PATH ... 成功"
+
+  # refresh dir 
+  - $TEST_SSH_CMD "cd $TEST_PROJECT_PATH/$CI_PROJECT_NAME ; bash"
+  - $TEST_SSH_CMD "cd ~ ; bash"
+
+
+  environment:
+    name: test
+    url: http://test-dachuan-mes-ui.meiqicloud.com/
+  when: manual
+  only: 
+  - dev
+
+
+
+
+
+
+
+
+
+
+
+
+
